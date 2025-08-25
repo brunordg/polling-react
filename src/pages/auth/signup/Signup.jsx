@@ -17,10 +17,14 @@ import {
 import { useState } from "react";
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useNavigate } from "react-router-dom";
+import { useSnackbar } from "notistack";
+import { signup } from "../../../services/auth/auth"
+import { saveToken } from "../../../utility/common";
 
 const defaultTheme = createTheme();
 
 const Signup = () => {
+  const { enqueueSnackbar } = useSnackbar();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -45,8 +49,29 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    console.log(formData);
-    setLoading(false);
+
+    try {
+    
+      const response = await signup(formData);
+
+      if (response.status === 201) {
+        const responseData = response.data;
+        saveToken(responseData.token);
+        navigate("/dashboard");
+        enqueueSnackbar(`Welcome ${responseData.name}`, { variant: "success", autoHideDuration: 5000 });
+      }
+
+    } catch (error) {
+      console.error("Signup Error:", error);
+      if (error.response && error.response.status === 409) {        
+        enqueueSnackbar("User already exists!", { variant: "error", autoHideDuration: 5000 });
+      } else {
+        enqueueSnackbar("Signu up failed!", { variant: "error", autoHideDuration: 5000 });
+      }
+    } finally {
+      setLoading(false)
+    }
+
   };
 
   return (

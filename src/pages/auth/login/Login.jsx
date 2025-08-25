@@ -3,6 +3,9 @@ import { Avatar, Backdrop, Box, Button, CircularProgress, Container, CssBaseline
 import { useState } from "react";
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useNavigate } from "react-router-dom";
+import { login } from "../../../services/auth/auth";
+import { saveToken } from "../../../utility/common";
+import { enqueueSnackbar } from "notistack";
 
 const defaultTheme = createTheme();
 
@@ -17,18 +20,28 @@ const Login = () => {
     setFormData(prevState => ({ ...prevState, [name]: value }));
   };
 
-  // Função para envio do formulário
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
-      console.log(formData)
+
+      const response = await login(formData);
+
+      if (response.status === 200) {
+        const responseData = response.data;
+        saveToken(responseData.token);
+        navigate("/dashboard");
+        enqueueSnackbar(`Welcome ${responseData.name}`, { variant: "success", autoHideDuration: 5000 });
+      }
+
     } catch (error) {
-      console.error("Login failed", error);
+      console.error("Signup Error:", error);
+      enqueueSnackbar("Sign in failed!", { variant: "error", autoHideDuration: 5000 });
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
+
   };
 
   return (
@@ -41,35 +54,35 @@ const Login = () => {
           </Avatar>
           <Typography component="h1" variant="h5">Sign in</Typography>
           <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
-            <TextField 
+            <TextField
               type="email"
-              margin="normal" 
-              required 
-              fullWidth 
-              id="email" 
-              label="Email Address" 
-              name="email" 
-              autoComplete="email" 
-              autoFocus 
-              value={formData.email} 
-              onChange={handleInputChange} 
+              margin="normal"
+              required
+              fullWidth
+              id="email"
+              label="Email Address"
+              name="email"
+              autoComplete="email"
+              autoFocus
+              value={formData.email}
+              onChange={handleInputChange}
               sx={{ mb: 2 }}
             />
 
-            <TextField 
+            <TextField
               type="password"
-              margin="normal" 
-              required 
-              fullWidth 
-              id="password" 
-              label="Password" 
-              name="password" 
-              autoComplete="password" 
-              value={formData.password} 
-              onChange={handleInputChange} 
+              margin="normal"
+              required
+              fullWidth
+              id="password"
+              label="Password"
+              name="password"
+              autoComplete="password"
+              value={formData.password}
+              onChange={handleInputChange}
               sx={{ mb: 2 }}
             />
-            
+
             <Button
               type="submit"
               fullWidth
